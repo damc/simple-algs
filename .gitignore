@@ -1,0 +1,6 @@
+.pytest_cache
+tests/.pytest_cache
+.idea
+__pycache__
+tests/__pycache__
+simple_algs/__pycache__
