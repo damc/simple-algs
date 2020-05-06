@@ -23,7 +23,7 @@ def test_supervised_learning_1():
 
 
 def supervised_learning_2_data():
-    test_file_names = ['data/test.json']
+    test_file_names = ['tests/data/test.json']
     for file_name in test_file_names:
         with open(file_name) as file:
             data = load(file)

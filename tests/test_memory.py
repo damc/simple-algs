@@ -1,6 +1,6 @@
 from numpy import zeros, array, array_equal
 
-from helpers import same
+from simple_algs.helpers import same
 from simple_algs.memory import MemoryCollection, Tape, Calculator
 
 
