@@ -23,4 +23,3 @@ class WhileLoop(ControlStructure):
                 operations_counter.allow_execution()
         ):
             self.body(operations_counter)
-
