@@ -71,7 +71,7 @@ print(is_palindrom("kajak"))  # prints True
 
 In the above example, the program will take a lot of time only when you run it for the first time.
 
-Sometimes the library can create some function that fits the examples but not the one that you had in mind. Then you simply need to add more examples. If for some input, the created function returns a value which is different from the one you want, then simply add that input and the correct output to the examples.
+Sometimes the library can create some function that fits the examples but not the one that you had in mind. Then you simply need to add more examples. If for some input the created function returns a value which is different from the one you want, then simply add that input and the correct output to the examples.
 
 Later, more documentation will be added on how to use the library.
 
