@@ -4,11 +4,11 @@ with open("readme.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="simple-algs",
+    name="simple_algs",
     version="0.0.1",
     author="Damian Czapiewski",
     author_email="damiancz@mailfence.com",
-    description="Simple ALGS implementation",
+    description="Library for program synthesis",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/damc/simple-algs",
