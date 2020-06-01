@@ -6,7 +6,7 @@ This is an open-source project and you can join it.
 
 # Examples of usage
 
-The project is in progress, so the following examples don't work yet, but it will work after we finish a few tasks that are on "Issues" page in that repository.
+The project is in progress, so the following examples don't work yet, but it will work after we finish a few tasks that are on the "Issues" page in this repository.
 
 ``` python
 from simple_algs.automation import Automation
