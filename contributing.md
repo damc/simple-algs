@@ -22,13 +22,13 @@ The below procedure is a standard software development cycle, you don't have to 
     2. estimated time (to finish the task);
     3. don't work on an issue that someone is already assigned to.
 
-When creating a new issue, please include the following things in the description:
-    1. What needs to be done.
-    2. Priority (possible priorities: urgent, super required, required, nice to have, a bit nice to have).
-    3. Estimated time (that it will take to finish the issue).
-    4. Which issues (tasks) needs to be done before that issue, if there is anything blocking the issue that you are adding.
+    When creating a new issue, please include the following things in the description:
+        1. What needs to be done.
+        2. Priority (possible priorities: urgent, super required, required, nice to have, a bit nice to have).
+        3. Estimated time (that it will take to finish the issue).
+        4. Which issues (tasks) needs to be done before that issue, if there is anything blocking the issue that you are adding.
 
-Sometimes you can add a task without this information and add this information later.
+You can add a task without that information and add that information later.
 
 3. Assign yourself to the issue that you want to work on.
 4. Create a new branch.
