@@ -77,5 +77,5 @@ Later, more documentation will be added on how to use the library.
 
 # Contributing
 
-If you want to contribute to this open-source project, then read contributing.md file.
+If you want to contribute to this open-source project, then read [contributing.md](https://github.com/damc/simple-algs/blob/master/contributing.md) file.
 
