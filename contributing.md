@@ -38,7 +38,7 @@ The below procedure is a standard software development cycle, you don't have to 
 9. Create a pull request (from your branch to "master" branch). You can do this by going to ["Pull requests"](https://github.com/damc/simple-algs/pulls). Also, after you push your branch, Git should give you a link to create a new pull request in response to your push. It's good to add "Close #<number of issue>" in the description of the pull request, where <number of issue> is the number of issue that you work on. Thanks to that, the issue that you work on will automatically close when your pull request is merged to the main branch.
 10. Make sure that the build is ok and all checks are ok (there are automatic checks if all unit tests pass and code quality checks using Lint). If something is wrong, then fix it, commit and push again.
 11. Wait until someone approves your pull request. If there any comments on what you could improve, then make the suggested improvements (if the suggestions are good, in your opinion) or debate on why they are not a good idea (if the suggestions are bad, in your opinion).
-12. Merge it. Click "Squash and merge" so that all commits from that issue are squashed into one commit. Make sure that the issue number is in the name of the squashed commit (the number should be prefixed with "#").
+12. Merge it. Click "Squash and merge" so that all commits from that issue are squashed into one commit. Make sure that the pull request number is in the name of the squashed commit (the number should be prefixed with "#").
 13. Close the issue that you worked on, if it hasn't been automatically closed.
 14. Job done.
 
