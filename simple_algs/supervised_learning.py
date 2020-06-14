@@ -81,7 +81,7 @@ class SupervisedLearning(EventDispatcher):
         )
         return postprocessed_output
 
-    def _preprocess(self, data):
+    def _preprocess(self, data): # use list comprehension
         preprocessed_data = []
         for sample in data:
             input_ = self.preprocess_input(sample.input)

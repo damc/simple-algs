@@ -4,6 +4,7 @@ from json import load
 from numpy import array
 from pytest import mark
 
+from simple_algs.helpers import same
 from simple_algs.instructions import ControlStructure
 from simple_algs.memory import Calculator, Tape, MemoryCollection, Ignored
 from simple_algs.supervised_learning import SupervisedLearning, DataSample
@@ -132,3 +133,34 @@ def test_supervised_learning_2(training_data, testing_data):
 
     sample = testing_data[0]
     assert sample.output == supervised_learning.predict(sample.input)
+
+
+def supervised_learning_3_data():
+    return [
+        (
+            DataSample.from_list_of_dicts(
+                [
+                    {'input': 5, 'output': [1, 0, 1]},
+                    {'input': 10, 'output': [0, 1, 0, 1]},
+                    {'input': 8, 'output': [0, 0, 0, 1]},
+                    {'input': 99, 'output': [1, 1, 0, 0, 0, 1, 1]},
+                    {'input': 2, 'output': [0, 1]}
+                ]
+            ),
+            [
+                DataSample(7, [1, 1, 1]),
+                DataSample(3, [1, 1]),
+                DataSample(6, [0, 1, 1])
+            ],
+            []
+        )
+    ]
+
+
+@mark.parametrize("training_data, testing_data", supervised_learning_3_data())
+def test_supervised_learning_3(training_data, testing_data, hyperparameters):
+    supervised_learning = SupervisedLearning(**hyperparameters)
+    supervised_learning.fit(training_data)
+    for sample in testing_data:
+        prediction = supervised_learning.predict(sample.input)
+        assert same(sample.output, prediction)

@@ -1,7 +1,7 @@
 from copy import copy
 
 from .helpers import CustomBaseNumber
-from .instructions import Action, Condition, ControlStructure
+from .instructions import Action, Condition, ControlStructureAbstract
 from .strategy import Strategy
 
 
@@ -67,7 +67,7 @@ class BruteForceGenerator(StrategyGeneratorAbstract):
                 body_stack.pop()
                 if not body_stack:
                     return False
-            if isinstance(instruction, ControlStructure):
+            if isinstance(instruction, ControlStructureAbstract):
                 instruction.body = Strategy()
                 body_stack.append(instruction.body)
         return strategy

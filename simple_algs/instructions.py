@@ -3,7 +3,7 @@ from inspect import signature
 from .strategy import Strategy
 
 
-class Instruction:
+class InstructionAbstract:
     def __init__(self, execution):
         self.execution = execution
 
@@ -23,11 +23,11 @@ class Instruction:
         return str(self)
 
 
-class Action(Instruction):
+class Action(InstructionAbstract):
     pass
 
 
-class ControlStructure(Instruction):
+class ControlStructureAbstract(InstructionAbstract):
     NEEDS_CONDITION = False
     KEYWORD = 'UNNAMED_CONTROL_STRUCTURE'
 
@@ -58,5 +58,5 @@ class ControlStructure(Instruction):
         str(self)
 
 
-class Condition(Instruction):
+class Condition(InstructionAbstract):
     pass

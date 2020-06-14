@@ -1,7 +1,7 @@
-from .instructions import ControlStructure
+from .instructions import ControlStructureAbstract
 
 
-class ConditionalStatement(ControlStructure):
+class ConditionalStatement(ControlStructureAbstract):
     NEEDS_CONDITION = True
     KEYWORD = 'IF'
 
@@ -13,7 +13,7 @@ class ConditionalStatement(ControlStructure):
             self.body(operations_counter)
 
 
-class WhileLoop(ControlStructure):
+class WhileLoop(ControlStructureAbstract):
     NEEDS_CONDITION = True
     KEYWORD = 'WHILE'
 

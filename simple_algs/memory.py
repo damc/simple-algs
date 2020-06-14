@@ -1,6 +1,9 @@
 from functools import partial
+from inspect import signature, Signature
 
 from numpy import empty
+
+from .helpers import EventDispatcher
 
 
 class Condition:
@@ -9,31 +12,40 @@ class Condition:
         self.value = value
 
 
-class MemoryAbstract:
+class MemoryAbstract(EventDispatcher):
     def __init__(self, actions=None, control_structures=None, conditions=None):
-        self.actions = actions or self.default_actions()
+        self._actions = actions or self.default_actions()
         self.control_structures = (
                 control_structures or self.default_control_structures()
-        )
-        self.conditions = conditions or self.default_conditions()
+        )  # move control structures to supervised_learning
+        self._conditions = conditions or self.default_conditions()
+        super(MemoryAbstract, self).__init__()
 
     def input(self, data):
-        raise NotImplementedError("Call to an abstract method")
+        pass
 
     def output(self):
-        raise NotImplementedError("Call to an abstract method")
+        return None
 
     def reset(self):
-        raise NotImplementedError("Call to an abstract method")
+        pass
+
+    @property
+    def actions(self):
+        return self._actions
+
+    @actions.setter
+    def actions(self, actions):
+        raise PermissionError("Actions property is read-only")
 
     def default_actions(self):
-        return []
+        return set()
 
     def default_control_structures(self):
-        return []
+        return set()
 
     def default_conditions(self):
-        return []
+        return set()
 
 
 class MemoryCollection(MemoryAbstract):
@@ -184,7 +196,7 @@ class Tape(MemoryAbstract):
         self.data = empty(self.shape)
 
     def default_actions(self):
-        return (
+        return set(
                 [
                     partial(self.set, value=i)
                     for i in range(self.max_value + 1)
@@ -210,10 +222,12 @@ class Tape(MemoryAbstract):
         self.pointer += [0 for _ in range(len(shape) - len(self.pointer))]
 
     def default_conditions(self):
-        return [
-            partial(self.indicated_value_equals, value=i)
-            for i in range(self.max_value + 1)
-        ]
+        return set(
+            [
+                partial(self.indicated_value_equals, value=i)
+                for i in range(self.max_value + 1)
+            ]
+        )
 
 
 class Calculator(MemoryAbstract):
@@ -279,16 +293,10 @@ class Calculator(MemoryAbstract):
     #     self.result = self.displayed
 
     def default_actions(self):
-        return (
+        return set(
                 [partial(self.type, digit=i) for i in range(0, 10)] +
                 [self.add, self.deduct, self.multiply, self.divide]
         )
-
-    def default_conditions(self):
-        return []
-
-    def default_control_structures(self):
-        return []
 
 
 class Ignored(MemoryAbstract):
@@ -305,11 +313,207 @@ class Ignored(MemoryAbstract):
     def reset(self):
         self.data = None
 
+
+class Variables(MemoryAbstract):
+    def __init__(self, input_type, output_type, available_types, functions):
+        super(Variables, self).__init__()
+        self._available_types = available_types
+        self._functions = functions
+        self._variables = []
+        self._variables_for_types = {}
+        self._functions_for_parameter_types = {}
+        self._actions_for_variables = {}
+        self._input_type = input_type
+        self._output_type = output_type
+        self.input_key = 0
+        self.output_key = 0 if input_type == output_type else 1
+
+        self._prepare_functions_for_parameter_types()
+        self._create_input_output_variables()
+
+    def input(self, data):
+        self._variables[self.input_key] = data
+
+    def output(self):
+        return self._variables[self.output_key]
+
+    def reset(self):
+        self._variables = []
+        self._create_input_output_variables()
+
+    @property
+    def variables(self):
+        return self._variables
+
+    @variables.setter
+    def variables(self, variables):
+        raise PermissionError("Variables property is read-only")
+
+    def create(self, type_):
+        value = type_()
+        variable = Variable(type(value), value)
+        self._variables.append(variable)
+        self._actions_for_variables[variable] = []
+        self._variables_for_types.setdefault(type_, []).append(variable)
+
+        functions = self._functions_for_parameter_types[variable.type]
+        for function_ in functions:
+            call = FunctionCall(function_)
+            for parameter in call.parameters:
+                if parameter.type == variable.type:
+                    parameter.argument = variable
+                    call_copy = call.copy_including_parameters_and_return()
+                    self._add_every_possible_call_as_action(call_copy)
+                    parameter.argument = None
+
+    def remove(self, id_):
+        variable = self._variables[id_]
+        self._variables[id_] = None
+        actions = self._actions_for_variables[variable]
+        for action in actions:
+            self._actions.remove(action)
+        self._actions_for_variables.pop(variable)
+
     def default_actions(self):
         return []
 
-    def default_conditions(self):
-        return []
+    def _prepare_functions_for_parameter_types(self):
+        for type_ in self._available_types:
+            functions = []
+            for function_ in self._functions:
+                if self._has_parameter_type(function_, type_):
+                    functions.append(function_)
+            self._functions_for_parameter_types[type_] = functions
 
-    def default_control_structures(self):
-        return []
+    def _has_parameter_type(self, function_, type_):
+        call = FunctionCall(function_)
+        for parameter in call.parameters:
+            if parameter.type == type_:
+                return True
+        return False
+
+    def _create_input_output_variables(self):
+        self.create(self._input_type)
+        if self._input_type != self._output_type:
+            self.create(self._output_type)
+
+    def _add_every_possible_call_as_action(self, call, start_from=0):
+        i = start_from
+        while call.parameters[i].argument is not None:
+            i += 1
+        if i == len(call.parameters) + 1:
+            self._actions.add(call)
+            arguments = call.arguments()
+            for argument in arguments:
+                self._actions_for_variables[argument].append(call)
+            return
+
+        parameter = (
+            call.parameters[i]
+            if len(call.parameters) < i
+            else call.return_
+        )
+        if parameter.type is None:
+            variables = self._variables
+        else:
+            variables = self._variables_for_types.get(parameter.type, [])
+        for variable in variables:
+            parameter.argument = variable
+            call_copy = call.copy_including_parameters_and_return()
+            self._add_every_possible_call_as_action(call_copy, start_from + 1)
+
+
+class FunctionCall:
+    def __init__(self, function_, parameters=None, return_=None):
+        self.function = function_
+
+        signature_parameters = signature(function_).parameters
+        self.parameters = parameters or [
+            FunctionParameter(
+                signature_parameters[key].annotation,
+                signature_parameters[key].name,
+                None
+            )
+            for key in signature_parameters
+        ]
+
+        for parameter in self.parameters:
+            if parameter == Signature.empty:
+                parameter.type = None
+        if isinstance(function_, partial):
+            self.parameters = self._remove_assigned_parameters(
+                function_,
+                self.parameters
+            )
+
+        self.return_ = return_ or FunctionParameter(
+            signature(function_).return_annotation,
+            None,
+            None
+        )
+        if self.return_.type == Signature.empty:
+            self.return_.type = None
+
+    def copy_including_parameters_and_return(self):
+        parameters = [
+            FunctionParameter(
+                parameter.type,
+                parameter.name,
+                parameter.argument
+            )
+            for parameter in self.parameters
+        ]
+        return_ = FunctionParameter(
+            self.return_.type,
+            self.return_.name,
+            self.return_.argument
+        )
+        return FunctionCall(self.function, parameters, return_)
+
+    def arguments(self):
+        return [parameter.argument for parameter in self.parameters]
+
+    def _remove_assigned_parameters(self, partial_, parameters):
+        parameters_new = []
+        for parameter in parameters:
+            if parameter.name not in partial_.keywords:
+                parameters_new.append(parameter)
+        return parameters_new
+
+    def __call__(self):
+        arguments = {
+            parameter.name: parameter.argument.value
+            for parameter in self.parameters
+        }
+        if self.return_ is None:
+            self.function(**arguments)
+        else:
+            self.return_.value = self.function(**arguments)
+
+    def __eq__(self, other):
+        return (
+            self.__class__ == other.__class_ and
+            (
+                    (self.function, self.parameters, self.return_) ==
+                    (other.function, other.parameters, other.return_)
+            )
+        )
+
+    def __hash__(self):
+        return hash((self.function, tuple(self.parameters), self.return_))
+
+
+class FunctionParameter:
+    def __init__(self, type_, name, argument):
+        self.type = type_
+        self.name = name
+        self.argument = argument
+
+    def __hash__(self):
+        return hash((self.type, self.name, self.argument))
+
+
+class Variable:
+    def __init__(self, type_, value):
+        self.type = type_
+        self.value = value
