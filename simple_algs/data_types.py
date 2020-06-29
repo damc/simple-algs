@@ -1,8 +1,8 @@
 class Int:
-    def __init__(self):
-        self.data = 0
+    def __init__(self, data=0):
+        self.data = data
 
-    def type(self, digit):
+    def type(self, digit: int):
         self.data = self.data * 10 + digit
 
     def reset(self):
@@ -16,8 +16,8 @@ class Int:
 
 
 class Str:
-    def __init__(self):
-        self.data = ''
+    def __init__(self, data=''):
+        self.data = data
 
     def type(self, character):
         self.data += character

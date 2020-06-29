@@ -144,3 +144,15 @@ def test_same():
 
     assert same(array([1, 2, 3]), array([1, 2, 3]))
     assert not same(array([3, 2, 1]), array([1, 2, 3]))
+
+    assert same({1, 2, 3}, {2, 1, 3})
+
+    assert same({partial(c, x=4)}, {partial(c, x=4)})
+    assert same(
+        {partial(c, x=4), partial(b)},
+        {partial(b), partial(c, x=4)}
+    )
+    assert not same(
+        {partial(c, x=4), partial(b)},
+        {partial(b), partial(c, x=4), partial(c, x=5)}
+    )

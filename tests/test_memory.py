@@ -120,22 +120,31 @@ def test_variables():
     def concatenation(a: Str, b: Int) -> Str:
         return a.data.join(str(b.data))
 
+    def int_type_1(a: Int):
+        a.type(1)
+
+    def str_type_a(a: Str):
+        a.type('a')
+
+    def list_len(l: list) -> Int:
+        return Int(len(l))
+
     variables = Variables(
         Int,
         Int,
         [Int, Str, list],
         [
-            partial(Int.type, digit=1),
-            partial(Str.type, character='a'),
-            list.__len__,
+            int_type_1,
+            str_type_a,
+            list_len,
             concatenation
         ],
     )
     variables_list = variables.variables
     expected_actions = {
         FunctionCall(
-            Int.type,
-            [FunctionParameter(Int, None, variables_list[0])],
+            int_type_1,
+            [FunctionParameter(Int, 'a', variables_list[0])],
             None
         ),
         partial(variables.create, type_=Int),
@@ -145,24 +154,24 @@ def test_variables():
     assert same(expected_actions, variables.actions)
 
     variables.create(list)
-    expected_actions += {
-        variables.remove(1),
+    expected_actions |= {
+        partial(variables.remove, id_=1),
         FunctionCall(
-            list.__len__,
-            [FunctionParameter(Int, 'self', variables_list[1])],
+            list_len,
+            [FunctionParameter(list, 'l', variables_list[1])],
             FunctionParameter(Int, None, variables_list[0])
         )
     }
     assert same(expected_actions, variables.actions)
 
-    variables.create(str)
-    expected_actions += {
-        variables.remove(2),
+    variables.create(Str)
+    expected_actions |= {
+        partial(variables.remove, id_=2),
         FunctionCall(
             concatenation,
             [
                 FunctionParameter(Str, 'a', variables_list[2]),
-                FunctionParameter(Int, 'b', variables_list[0])
+                FunctionParameter(Int, 'b', variables_list[0])  # fails because there is no argument here, this is because of the bug where I typed 'wrong'
             ],
             FunctionParameter(Str, None, variables_list[2])
         ),
@@ -171,7 +180,7 @@ def test_variables():
 
     variables.remove(2)
     expected_actions -= {
-        variables.remove(2),
+        partial(variables.remove, id_=2),
         FunctionCall(
             concatenation,
             [

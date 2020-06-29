@@ -46,15 +46,10 @@ class EventDispatcher:
         self.event_listeners = event_listeners or {}
 
     def add_event_listener(self, event, listener):
-        if event not in self.event_listeners:
-            self.event_listeners[event] = []
-        self.event_listeners[event].append(listener)
+        self.event_listeners.setdefault(event, []).append(listener)
 
     def dispatch_event(self, event, args):
-        if event not in self.event_listeners:
-            return
-
-        for listener in self.event_listeners[event]:
+        for listener in self.event_listeners.get(event, []):
             listener(args)
 
 
@@ -92,11 +87,24 @@ def same(a, b):
                 return False
         return True
 
-    if isinstance(a, list) or isinstance(a, tuple) or isinstance(a, set):
+    if isinstance(a, set):
+        a = list(a)
+        b = list(b)
+        b_found = [False] * len(b)
+        for a_element in a:
+            found_same = False
+            for b_key, b_element in enumerate(b):
+                if same(a_element, b_element):
+                    found_same = True
+                    b_found[b_key] = True
+                    break
+            if not found_same:
+                return False
+        return all(b_found)
+
+    if isinstance(a, list) or isinstance(a, tuple):
         if len(a) != len(b):
             return False
-        if isinstance(a, set):
-            a = list(a)
         for key, value in enumerate(a):
             if not same(a[key], b[key]):
                 return False

@@ -316,7 +316,6 @@ class Ignored(MemoryAbstract):
 
 class Variables(MemoryAbstract):
     def __init__(self, input_type, output_type, available_types, functions):
-        super(Variables, self).__init__()
         self._available_types = available_types
         self._functions = functions
         self._variables = []
@@ -327,6 +326,8 @@ class Variables(MemoryAbstract):
         self._output_type = output_type
         self.input_key = 0
         self.output_key = 0 if input_type == output_type else 1
+
+        super(Variables, self).__init__()
 
         self._prepare_functions_for_parameter_types()
         self._create_input_output_variables()
@@ -349,14 +350,15 @@ class Variables(MemoryAbstract):
     def variables(self, variables):
         raise PermissionError("Variables property is read-only")
 
-    def create(self, type_):
-        value = type_()
+    def create(self, type_, value=None):
+        if value is None:
+            value = type_()
         variable = Variable(type(value), value)
         self._variables.append(variable)
         self._actions_for_variables[variable] = []
         self._variables_for_types.setdefault(type_, []).append(variable)
 
-        functions = self._functions_for_parameter_types[variable.type]
+        functions = self._functions_for_parameter_types.get(variable.type, [])
         for function_ in functions:
             call = FunctionCall(function_)
             for parameter in call.parameters:
@@ -365,6 +367,11 @@ class Variables(MemoryAbstract):
                     call_copy = call.copy_including_parameters_and_return()
                     self._add_every_possible_call_as_action(call_copy)
                     parameter.argument = None
+
+        variable_id = len(self.variables) - 1
+        if variable_id > self.output_key:
+            remove = partial(self.remove, id_=variable_id)
+            self.actions.add(remove)
 
     def remove(self, id_):
         variable = self._variables[id_]
@@ -375,7 +382,12 @@ class Variables(MemoryAbstract):
         self._actions_for_variables.pop(variable)
 
     def default_actions(self):
-        return []
+        return set(
+            [
+                partial(self.create, type_=type_)
+                for type_ in self._available_types
+            ]
+        )
 
     def _prepare_functions_for_parameter_types(self):
         for type_ in self._available_types:
@@ -387,6 +399,8 @@ class Variables(MemoryAbstract):
 
     def _has_parameter_type(self, function_, type_):
         call = FunctionCall(function_)
+        if call.return_ and call.return_.type == type_:
+            return True
         for parameter in call.parameters:
             if parameter.type == type_:
                 return True
@@ -399,18 +413,27 @@ class Variables(MemoryAbstract):
 
     def _add_every_possible_call_as_action(self, call, start_from=0):
         i = start_from
-        while call.parameters[i].argument is not None:
+        while (
+                i < len(call.parameters) and
+                call.parameters[i].argument is not None
+        ):
             i += 1
-        if i == len(call.parameters) + 1:
+
+        if (
+                i == len(call.parameters) + 1 or
+                i == len(call.parameters) and call.return_ is None
+        ):
             self._actions.add(call)
             arguments = call.arguments()
             for argument in arguments:
-                self._actions_for_variables[argument].append(call)
+                self._actions_for_variables.setdefault(argument, []).append(
+                    call
+                )
             return
 
         parameter = (
             call.parameters[i]
-            if len(call.parameters) < i
+            if len(call.parameters) < i  # wrong
             else call.return_
         )
         if parameter.type is None:
@@ -420,31 +443,34 @@ class Variables(MemoryAbstract):
         for variable in variables:
             parameter.argument = variable
             call_copy = call.copy_including_parameters_and_return()
-            self._add_every_possible_call_as_action(call_copy, start_from + 1)
+            self._add_every_possible_call_as_action(call_copy, i + 1)
 
 
 class FunctionCall:
     def __init__(self, function_, parameters=None, return_=None):
         self.function = function_
 
-        signature_parameters = signature(function_).parameters
-        self.parameters = parameters or [
-            FunctionParameter(
-                signature_parameters[key].annotation,
-                signature_parameters[key].name,
-                None
-            )
-            for key in signature_parameters
-        ]
+        if parameters:
+            self.parameters = parameters
+        else:
+            signature_parameters = signature(function_).parameters
+            self.parameters = [
+                FunctionParameter(
+                    signature_parameters[key].annotation,
+                    signature_parameters[key].name,
+                    None
+                )
+                for key in signature_parameters
+            ]
 
-        for parameter in self.parameters:
-            if parameter == Signature.empty:
-                parameter.type = None
-        if isinstance(function_, partial):
-            self.parameters = self._remove_assigned_parameters(
-                function_,
-                self.parameters
-            )
+            for parameter in self.parameters:
+                if parameter.type == Signature.empty:
+                    parameter.type = None
+            if isinstance(function_, partial):
+                self.parameters = self._remove_assigned_parameters(
+                    function_,
+                    self.parameters
+                )
 
         self.return_ = return_ or FunctionParameter(
             signature(function_).return_annotation,
@@ -452,7 +478,7 @@ class FunctionCall:
             None
         )
         if self.return_.type == Signature.empty:
-            self.return_.type = None
+            self.return_ = None
 
     def copy_including_parameters_and_return(self):
         parameters = [
@@ -463,10 +489,14 @@ class FunctionCall:
             )
             for parameter in self.parameters
         ]
-        return_ = FunctionParameter(
-            self.return_.type,
-            self.return_.name,
-            self.return_.argument
+        return_ = (
+            FunctionParameter(
+                self.return_.type,
+                self.return_.name,
+                self.return_.argument
+            )
+            if self.return_
+            else None
         )
         return FunctionCall(self.function, parameters, return_)
 
@@ -480,7 +510,7 @@ class FunctionCall:
                 parameters_new.append(parameter)
         return parameters_new
 
-    def __call__(self):
+    def __call__(self):  # test
         arguments = {
             parameter.name: parameter.argument.value
             for parameter in self.parameters
