@@ -74,7 +74,7 @@ Later, more documentation will be added on how to use the library.
 
 # Current progress
 
-For now, it's possbile to do above examples using SupervisedLearning class. However, it's not possible to do that out of the box, without specyfying any additional parameters. If you want to find arithmetic functions, you need to pass an instance of CalculatorMemory to as Memory argument of SuperivsedLearning constructor. For any other function, you would need to pass appropiate Memory and actions arguments.
+For now, it's possbile to do above examples using SupervisedLearning class. However, it's not possible to do that out of the box, without specyfying any additional parameters. If you want to find arithmetic functions, you need to pass an instance of CalculatorMemory as Memory argument of SuperivsedLearning constructor. For any other function, you would need to pass appropiate Memory and actions arguments as well, but it's more complex.
 
 # Contributing
 
