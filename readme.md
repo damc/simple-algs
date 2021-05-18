@@ -4,9 +4,11 @@ SimpleALGS is a library for programmatically creating (possibly "finding" would 
 
 This works for only simple functions/programs (for more complex, it requires too much computational power and too many examples).
 
+I don't develop the project at the moment.
+
 # Examples of usage
 
-The project is in progress, so the following examples don't work yet, but it will work after we finish a few tasks that are on the "Issues" page in this repository.
+The idea of the project is to make possible like below:
 
 ``` python
 from simple_algs.automation import function_from_examples
