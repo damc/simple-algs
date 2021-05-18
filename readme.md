@@ -8,7 +8,7 @@ I don't develop the project at the moment.
 
 # Examples of usage
 
-The idea of the project is to make possible like below:
+The idea of the project is to make possible something like that:
 
 ``` python
 from simple_algs.automation import function_from_examples
