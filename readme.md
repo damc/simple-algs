@@ -1,6 +1,6 @@
 # Simple ALGS
 
-**Note: Simple ALGS is a different thing than ALGS, they simply have a similar name (although there might be some other similarities, but ALGS is a more complex idea)**
+**Note: SimpleALGS is a different thing than ALGS, they simply have a similar name (although there might be some other similarities, but ALGS is a more complex idea)**
 
 SimpleALGS is a library for programmatically creating (possibly "finding" would be a better word) a function/program that meets given specification. Specification is a set of examples of inputs and corresponding outputs of that function/program.
 
